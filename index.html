@@ -4,80 +4,23 @@
   <meta charset="UTF-8" />
   <title>Roblox Lua Executor</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
       background-color: #000;
-      font-family: Consolas, monospace;
       overflow: hidden;
     }
-
-    #tabs {
-      display: flex;
-      background: #111;
-      height: 40px;
-      align-items: center;
-      padding: 0 10px;
-    }
-
-    .tab {
-      padding: 8px 16px;
-      background: #222;
-      color: #fff;
-      margin-right: 5px;
-      cursor: pointer;
-      border-radius: 6px 6px 0 0;
-      user-select: none;
-      transition: background 0.2s;
-    }
-
-    .tab.active {
-      background: #000;
-      border-bottom: 2px solid lime;
-    }
-
-    .tab .close {
-      margin-left: 8px;
-      color: red;
-      cursor: pointer;
-    }
-
-    #addTab {
-      padding: 8px;
-      background: #222;
-      color: #0f0;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-
-    #editorContainer {
-      height: calc(100% - 40px);
-      position: relative;
-    }
-
-    .editor {
-      display: none;
+    #container {
       width: 100%;
       height: 100%;
-      position: absolute;
-    }
-
-    .editor.active {
-      display: block;
     }
   </style>
 </head>
 <body>
-  <div id="tabs">
-    <div id="addTab">+ Add Tab</div>
-  </div>
-  <div id="editorContainer"></div>
+  <div id="container"></div>
 
-  <!-- Monaco Editor -->
+  <!-- Monaco Editor CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
   <script>
     const luaKeywords = [
@@ -95,14 +38,12 @@
       "TweenService", "Players", "Lighting", "Debris"
     ];
 
-    let editors = [];
-    let tabCounter = 0;
-    let currentTabId = null;
-
     require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
     require(['vs/editor/editor.main'], function () {
+      // Register Lua as a language
       monaco.languages.register({ id: 'lua' });
 
+      // Add Lua keyword autocomplete
       monaco.languages.registerCompletionItemProvider('lua', {
         provideCompletionItems: () => {
           const suggestions = luaKeywords.map(word => ({
@@ -114,6 +55,7 @@
         }
       });
 
+      // Define a pitch black theme
       monaco.editor.defineTheme('pitch-black', {
         base: 'vs-dark',
         inherit: true,
@@ -128,69 +70,16 @@
         }
       });
 
-      function createTab() {
-        const tabId = `tab-${tabCounter++}`;
-        const tab = document.createElement('div');
-        tab.className = 'tab';
-        tab.id = tabId;
-        tab.innerHTML = `Tab ${tabCounter} <span class="close">×</span>`;
-        document.getElementById('tabs').insertBefore(tab, document.getElementById('addTab'));
-
-        const editorDiv = document.createElement('div');
-        editorDiv.id = `editor-${tabId}`;
-        editorDiv.className = 'editor';
-        document.getElementById('editorContainer').appendChild(editorDiv);
-
-        const editorInstance = monaco.editor.create(editorDiv, {
-          value: '',
-          language: 'lua',
-          theme: 'pitch-black',
-          fontSize: 14,
-          automaticLayout: true,
-          minimap: { enabled: false }
-        });
-
-        editors[tabId] = editorInstance;
-
-        tab.addEventListener('click', () => switchTab(tabId));
-        tab.querySelector('.close').addEventListener('click', (e) => {
-          e.stopPropagation();
-          closeTab(tabId);
-        });
-
-        switchTab(tabId);
-      }
-
-      function switchTab(tabId) {
-        if (currentTabId === tabId) return;
-        if (currentTabId) {
-          document.getElementById(currentTabId).classList.remove('active');
-          document.getElementById(`editor-${currentTabId}`).classList.remove('active');
-        }
-        currentTabId = tabId;
-        document.getElementById(tabId).classList.add('active');
-        document.getElementById(`editor-${tabId}`).classList.add('active');
-        editors[tabId].focus();
-      }
-
-      function closeTab(tabId) {
-        const tabEl = document.getElementById(tabId);
-        const editorEl = document.getElementById(`editor-${tabId}`);
-        tabEl.remove();
-        editorEl.remove();
-        delete editors[tabId];
-        if (currentTabId === tabId) {
-          const remainingTabs = Object.keys(editors);
-          if (remainingTabs.length > 0) {
-            switchTab(remainingTabs[0]);
-          } else {
-            currentTabId = null;
-          }
-        }
-      }
-
-      document.getElementById('addTab').addEventListener('click', createTab);
-      createTab(); // create first tab
+      // Create the editor
+      monaco.editor.create(document.getElementById('container'), {
+        value: '',
+        language: 'lua',
+        theme: 'pitch-black',
+        fontSize: 14,
+        fontFamily: 'Consolas, monospace',
+        automaticLayout: true,
+        minimap: { enabled: false }
+      });
     });
   </script>
 </body>
